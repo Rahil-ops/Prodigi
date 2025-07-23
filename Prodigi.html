@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ProDigi - Genius Runs in the System</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      // ===================================================================
+      // IMPORTANT: DOUBLE-CHECK THESE ARE YOUR REAL SUPABASE CREDENTIALS
+      // ===================================================================
+      const SUPABASE_URL = "https://gydwiythbnxgqmbojbds.supabase.co"; 
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5ZHdpeXRoYm54Z3FtYm9qYmRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkzNzAzMzUsImV4cCI6MjA1NDk0NjMzNX0.4-iYszr6enMYuwiG2NSDGtHmrTZifiehVvy_3AoEing";
+      // ===================================================================
+      
+      let supabaseClient;
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color-start: #1e1a3e;
+            --bg-color-end: #100f1c;
+            --panel-bg: #141222;
+            --left-panel-bg: #0e0d1a;
+            --primary-accent: #9370DB; /* Dark Purple */
+            --primary-accent-hover: #a481e8;
+            --genius-color-start: #FFD700;
+            --genius-color-end: #FFA500;
+            --text-color: #e0e0e0;
+            --text-muted: #8c899a;
+            --border-color: #2a2a3a;
+            --input-bg: #1e1a3e;
+        }
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, var(--bg-color-start), var(--bg-color-end)); color: var(--text-color); height: 100vh; overflow: hidden; }
+        .background-pattern { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px); background-size: 20px 20px; opacity: 0.5; animation: pan 120s linear infinite; z-index: 0; }
+        @keyframes pan { 0% { background-position: 0% 0%; } 100% { background-position: 200% 200%; } }
+        .main-card { position: relative; z-index: 10; width: 90%; height: 90vh; max-width: 1100px; max-height: 650px; background: var(--panel-bg); border-radius: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.3); display: grid; grid-template-columns: 38% 62%; overflow: hidden; opacity: 0; animation: fadeIn 1s ease-out forwards; transition: grid-template-columns 0.5s ease-in-out; }
+        @media (max-width: 768px) { .main-card { grid-template-columns: 1fr !important; } .right-panel { display: none !important; } }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        .left-panel { background: var(--left-panel-bg); padding: 2.5rem; display: flex; flex-direction: column; transition: background 0.5s ease-in-out; }
+        .right-panel { position: relative; padding: 3rem 4rem; overflow: hidden; }
+        .right-panel::before { content: ''; position: absolute; top: -50%; left: -100%; width: 200%; height: 150%; background: var(--left-panel-bg); border-radius: 50%; z-index: 0; }
+        .title-main { font-size: 2.25rem; font-weight: 700; color: #ffffff; line-height: 1.2; }
+        .subtitle { font-family: 'Playfair Display', serif; font-style: italic; font-size: 2rem; background: linear-gradient(135deg, #e0e0e0, #a0a0a0); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin-top: 0.5rem; opacity: 0.8; }
+        .genius-text { background: linear-gradient(45deg, var(--genius-color-start), var(--genius-color-end)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .input-wrapper { position: relative; }
+        .input-icon { position: absolute; top: 50%; left: 1rem; transform: translateY(-50%); color: var(--text-muted); }
+        .input-field { background-color: var(--input-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px 10px 2.75rem; color: var(--text-color); font-size: 13px; width: 100%; transition: all 0.3s ease; }
+        .input-field:focus { outline: none; border-color: var(--primary-accent); box-shadow: 0 0 15px rgba(147, 112, 219, 0.2); }
+        .btn-primary { background: var(--primary-accent); color: #ffffff; font-weight: 700; border-radius: 8px; padding: 12px 20px; font-size: 14px; cursor: pointer; transition: all 0.3s ease; border: none; box-shadow: 0 4px 20px rgba(147, 112, 219, 0.25); }
+        .btn-primary:hover { background: var(--primary-accent-hover); transform: translateY(-2px); box-shadow: 0 7px 25px rgba(147, 112, 219, 0.3); }
+        .loading-spinner { border: 2px solid rgba(147, 112, 219, 0.3); border-top: 2px solid var(--primary-accent); width: 24px; height: 24px; }
+    </style>
+</head>
+<body class="flex items-center justify-center">
+    <div class="background-pattern"></div>
+    
+    <!-- Page Container -->
+    <div id="app-container" class="w-full h-full flex items-center justify-center">
+        <!-- User Login/Signup Page -->
+        <div id="user-login-page" class="w-full h-full flex items-center justify-center">
+            <div id="main-content" class="main-card">
+                <div class="left-panel justify-center">
+                    <div class="w-full max-w-xs mx-auto">
+                        <div class="mb-8 mt-8 flex justify-center">
+                            <div class="flex flex-col items-center space-y-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                                <span class="font-bold text-white text-3xl">Pro<span class="genius-text">Digi</span></span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4"></div>
+                        <div id="auth-section">
+                            <div id="auth-error" class="text-red-400 text-xs mb-4 p-2 text-center bg-red-500/10 rounded-lg hidden"></div>
+                            <div id="auth-spinner" class="flex justify-center mb-4 hidden"><div class="loading-spinner rounded-full animate-spin"></div></div>
+                            
+                            <!-- Login Form -->
+                            <form id="login-form" class="space-y-4" onsubmit="loginUser(event)">
+                                <h2 class="text-xl font-bold text-white mb-1">User Login</h2>
+                                <p class="text-xs text-muted mb-4">Access your dashboard.</p>
+                                <div class="input-wrapper">
+                                    <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                    <input type="email" id="login-email" placeholder="Email" class="input-field" required />
+                                </div>
+                                <div class="input-wrapper">
+                                    <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                    <input type="password" id="login-password" placeholder="Password" class="input-field" required />
+                                </div>
+                                <div class="flex items-center justify-between text-xs mt-2">
+                                    <label class="flex items-center space-x-2 text-muted cursor-pointer">
+                                        <input type="checkbox" class="w-3.5 h-3.5 rounded bg-gray-700 border-gray-600 text-purple-500 focus:ring-purple-600">
+                                        <span>Remember me</span>
+                                    </label>
+                                    <a href="#" onclick="showModal('forgot-password-modal')" class="text-muted hover:text-white">Forgot password?</a>
+                                </div>
+                                <button type="submit" class="btn-primary w-full !mt-6">LOGIN</button>
+                            </form>
+                            
+                            <!-- Signup Form -->
+                            <form id="signup-form" class="space-y-4 hidden" onsubmit="signupUser(event)">
+                                <h2 class="text-2xl font-bold text-white mb-1">Create Account</h2>
+                                <p class="text-sm text-muted mb-6">Get started with ProDigi.</p>
+                                <div class="input-wrapper">
+                                    <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                                    <input type="text" id="signup-factory-name" placeholder="Factory Name" class="input-field" required/>
+                                </div>
+                                <div class="input-wrapper">
+                                    <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                    <input type="email" id="signup-email" placeholder="Email" class="input-field" required/>
+                                </div>
+                                <div class="input-wrapper">
+                                    <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                    <input type="password" id="signup-password" placeholder="Password" class="input-field" required/>
+                                </div>
+                                <button type="submit" class="btn-primary w-full !mt-6">SIGN UP</button>
+                            </form>
+                            
+                            <!-- Toggle Link -->
+                            <p class="text-xs text-muted mt-6 text-center">
+                                <span id="auth-toggle-text">Not a member?</span>
+                                <a href="#" id="auth-toggle-link" class="font-semibold text-white hover:underline">Sign up here.</a>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="text-xs text-muted mt-auto text-center">
+                        <p>A Product by RBC</p>
+                        <div class="mt-2">
+                            <a href="https://www.rajeshbheda.com/" target="_blank" class="text-blue-400 hover:underline">About Us</a>
+                            <span class="mx-2">|</span>
+                            <a href="#" onclick="showModal('admin-code-modal')" class="text-blue-400 hover:underline">Admin</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="right-panel flex flex-col justify-center items-end" style="padding-top: 2rem;">
+                    <div class="relative z-10 max-w-lg text-right">
+                        <h1 class="title-main" style="font-size: 4.625rem;">Pro<span class="genius-text">Digi</span></h1>
+                        <p class="subtitle">Genius runs in the system</p>
+                        <div class="text-xs text-muted mt-8 leading-relaxed space-y-4">
+                            <p>It is the intelligent dashboard your factory never had. It connects production, quality, and supply chain data — all in real time, all in one place. Designed to spot what others miss and simplify what others complicate.</p>
+                            <p class="font-bold text-white mt-4">Why settle for a dashboard, when you can have a prodigy?</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Login Page -->
+        <div id="admin-login-page" class="hidden w-full h-full flex items-center justify-center">
+            <div class="main-card !max-w-2xl !grid-cols-1">
+                <div class="left-panel justify-center">
+                     <div class="w-full max-w-sm mx-auto">
+                         <div class="mb-8 flex justify-between items-center">
+                             <div class="flex items-center space-x-3">
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                                 <span class="font-bold text-white text-lg">Pro<span class="genius-text">Digi</span> Admin</span>
+                             </div>
+                            <button onclick="navigateTo('user-login-page')" class="text-xs text-blue-400 hover:underline">← Back to User Login</button>
+                         </div>
+                        <div class="flex bg-gray-900/50 rounded-lg p-1 mb-4">
+                            <button id="admin-login-tab" class="flex-1 py-2 text-sm font-semibold text-white bg-purple-600 rounded-md">Login</button>
+                            <button id="admin-signup-tab" class="flex-1 py-2 text-sm font-semibold text-muted">Sign Up</button>
+                        </div>
+                        <div id="admin-auth-error" class="text-red-400 text-xs mb-4 p-2 text-center bg-red-500/10 rounded-lg hidden"></div>
+                        <div id="admin-auth-spinner" class="flex justify-center mb-4 hidden"><div class="loading-spinner rounded-full animate-spin"></div></div>
+                        
+                        <form id="admin-login-form" class="space-y-4" onsubmit="loginAdmin(event)">
+                            <div class="input-wrapper">
+                                <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                <input type="email" id="admin-login-email" placeholder="Admin Email" class="input-field" required />
+                            </div>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                <input type="password" id="admin-login-password" placeholder="Password" class="input-field" required />
+                            </div>
+                            <button type="submit" class="btn-primary w-full !mt-6">LOGIN AS ADMIN</button>
+                        </form>
+
+                        <form id="admin-signup-form" class="space-y-4 hidden" onsubmit="signupAdmin(event)">
+                             <div class="input-wrapper">
+                                 <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                 <input type="email" id="admin-signup-email" placeholder="Admin Email" class="input-field" required />
+                             </div>
+                             <div class="input-wrapper">
+                                 <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                 <input type="password" id="admin-signup-password" placeholder="Create Password" class="input-field" required />
+                             </div>
+                             <button type="submit" class="btn-primary w-full !mt-6">CREATE ADMIN ACCOUNT</button>
+                        </form>
+                       </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <div id="forgot-password-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-900 border border-gray-800 rounded-lg p-6 max-w-sm w-full m-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-white">Password Recovery</h3>
+                <button onclick="hideModal('forgot-password-modal')" class="text-gray-400 hover:text-white">×</button>
+            </div>
+            <p id="reset-instructions" class="text-sm text-gray-300 mb-4">Enter your email address and we will send you a link to reset your password.</p>
+            <form id="password-reset-form" class="space-y-4">
+                <div class="input-wrapper">
+                     <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    <input type="email" id="reset-email" placeholder="Your email address" class="input-field" required />
+                </div>
+                <button type="submit" class="btn-primary w-full">Send Reset Link</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="admin-code-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-900 border border-gray-800 rounded-lg p-6 max-w-sm w-full m-4">
+            <h3 class="text-lg font-bold text-white mb-4">Admin Access</h3>
+            <p class="text-sm text-gray-300 mb-4">Please enter the admin access code to continue.</p>
+            <form id="admin-code-form">
+                <input type="password" id="admin-code-input" placeholder="Access Code" class="input-field !pl-4 w-full mb-4">
+                <p id="admin-code-error" class="text-red-400 text-xs mb-4 hidden">Invalid access code.</p>
+                <div class="flex justify-end space-x-4">
+                    <button type="button" onclick="hideModal('admin-code-modal')" class="text-muted">Cancel</button>
+                    <button type="submit" class="btn-primary">Proceed</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Admin Dashboard -->
+    <div id="admin-dashboard" class="fixed inset-0 bg-black/70 z-50 hidden p-4 sm:p-8">
+        <div class="bg-gray-900 border border-gray-800 rounded-lg w-full h-full flex flex-col p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Admin Dashboard</h2>
+                <button onclick="logout()" class="text-sm text-muted hover:text-white">Logout</button>
+            </div>
+            <div class="flex border-b border-gray-700 mb-4">
+                <button id="factories-tab" class="py-2 px-4 text-white border-b-2 border-purple-500">Factories</button>
+                <button id="users-tab" class="py-2 px-4 text-muted">User Management</button>
+            </div>
+            <div id="factories-view" class="flex-grow overflow-y-auto">
+                 <input type="text" id="factory-search" onkeyup="filterList('factory-list', 'factory-search')" placeholder="Search factories..." class="input-field !pl-4 w-full mb-4">
+                 <div id="factory-list" class="space-y-2 pr-2"></div>
+            </div>
+            <div id="users-view" class="hidden flex-grow overflow-y-auto">
+                <div id="user-list" class="space-y-2 pr-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="user-form-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-md w-full m-4">
+            <h3 class="text-lg font-bold text-white mb-4">Edit User / Reset Password</h3>
+            <form id="user-form" class="space-y-4">
+                <input type="hidden" id="user-id-field">
+                <input type="text" id="user-factory-name" placeholder="Factory Name" class="input-field !pl-4" required>
+                <input type="email" id="user-email" placeholder="User Email" class="input-field !pl-4 bg-gray-700 cursor-not-allowed" readonly>
+                <input type="password" id="user-password" placeholder="Set New Password (optional)" class="input-field !pl-4">
+                <div class="flex justify-end space-x-4">
+                    <button type="button" onclick="hideModal('user-form-modal')" class="text-muted">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- UI Control & Navigation ---
+        function toggleAuthView(showLoginView) {
+            const loginForm = document.getElementById("login-form");
+            const signupForm = document.getElementById("signup-form");
+            const toggleText = document.getElementById("auth-toggle-text");
+            const toggleLink = document.getElementById("auth-toggle-link");
+            const mainCard = document.getElementById("main-content");
+            const rightPanel = document.querySelector(".right-panel");
+            const leftPanel = document.querySelector(".left-panel");
+
+            document.getElementById("auth-error").classList.add("hidden");
+
+            if (showLoginView) {
+                signupForm.classList.add("hidden");
+                loginForm.classList.remove("hidden");
+                toggleText.textContent = "Not a member? ";
+                toggleLink.textContent = "Sign up here.";
+                mainCard.style.gridTemplateColumns = "38% 62%";
+                if (window.innerWidth > 768) {
+                    rightPanel.style.display = 'flex';
+                }
+                leftPanel.style.background = 'var(--left-panel-bg)';
+            } else {
+                loginForm.classList.add("hidden");
+                signupForm.classList.remove("hidden");
+                toggleText.textContent = "Already a member? ";
+                toggleLink.textContent = "Login here.";
+                mainCard.style.gridTemplateColumns = "1fr";
+                rightPanel.style.display = 'none';
+                leftPanel.style.background = 'var(--panel-bg)';
+            }
+        }
+
+        function navigateTo(pageId) { document.getElementById('user-login-page').classList.add('hidden'); document.getElementById('admin-login-page').classList.add('hidden'); document.getElementById(pageId).classList.remove('hidden'); }
+        function showModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function hideModal(id) { document.getElementById(id).classList.add('hidden'); if (id === 'admin-code-modal') { document.getElementById('admin-code-error').classList.add('hidden'); document.getElementById('admin-code-form').reset(); } }
+        function showError(msg, isAdmin = false) { const errorBoxId = isAdmin ? 'admin-auth-error' : 'auth-error'; const errorBox = document.getElementById(errorBoxId); errorBox.innerText = msg; errorBox.classList.remove("hidden"); }
+        function toggleSpinner(state, isAdmin = false) { const spinnerId = isAdmin ? 'admin-auth-spinner' : 'auth-spinner'; document.getElementById(spinnerId).classList.toggle("hidden", !state); }
+        function filterList(listId, inputId) { const input = document.getElementById(inputId); const filter = input.value.toUpperCase(); const list = document.getElementById(listId); const items = list.children; for (let i = 0; i < items.length; i++) { let txtValue = items[i].textContent || items[i].innerText; if (txtValue.toUpperCase().indexOf(filter) > -1) { items[i].style.display = ""; } else { items[i].style.display = "none"; } } }
+        function setupAdminTabs() { const factoriesTab = document.getElementById('factories-tab'); const usersTab = document.getElementById('users-tab'); const factoriesView = document.getElementById('factories-view'); const usersView = document.getElementById('users-view'); factoriesTab.addEventListener('click', () => { factoriesView.classList.remove('hidden'); usersView.classList.add('hidden'); factoriesTab.classList.add('text-white', 'border-purple-500'); usersTab.classList.remove('text-white', 'border-purple-500'); usersTab.classList.add('text-muted'); }); usersTab.addEventListener('click', () => { usersView.classList.remove('hidden'); factoriesView.classList.add('hidden'); usersTab.classList.add('text-white', 'border-purple-500'); factoriesTab.classList.remove('text-white', 'border-purple-500'); factoriesTab.classList.add('text-muted'); loadUsers(); }); }
+        function setupAdminLoginTabs() { const loginTab = document.getElementById('admin-login-tab'); const signupTab = document.getElementById('admin-signup-tab'); const loginForm = document.getElementById('admin-login-form'); const signupForm = document.getElementById('admin-signup-form'); loginTab.addEventListener('click', () => { loginForm.classList.remove('hidden'); signupForm.classList.add('hidden'); loginTab.classList.add('bg-purple-600', 'text-white'); signupTab.classList.remove('bg-purple-600', 'text-white'); }); signupTab.addEventListener('click', () => { signupForm.classList.remove('hidden'); loginForm.classList.add('hidden'); signupTab.classList.add('bg-purple-600', 'text-white'); loginTab.classList.remove('bg-purple-600', 'text-white'); }); }
+
+        // --- Supabase Authentication Functions ---
+        async function signupUser(event) {
+            event.preventDefault();
+            toggleSpinner(true);
+            try {
+                const email = document.getElementById("signup-email").value;
+                const password = document.getElementById("signup-password").value;
+                const factoryName = document.getElementById("signup-factory-name").value;
+                const { data: { user }, error } = await supabaseClient.auth.signUp({ email, password });
+                if (error) throw error;
+                if (!user) throw new Error("Signup succeeded but no user object was returned.");
+                const { error: insertError } = await supabaseClient.from("factory_access").insert([{ user_id: user.id, user_email: email, factory_name: factoryName, role: "user" }]);
+                if (insertError) throw insertError;
+                alert("Sign up successful! Please check your email to verify your account, then you can log in.");
+                toggleAuthView(true);
+            } catch (error) {
+                console.error("Signup Error:", error);
+                showError(`Signup failed: ${error.message}`);
+            } finally {
+                toggleSpinner(false);
+            }
+        }
+
+        async function loginUser(event) { 
+            event.preventDefault(); 
+            toggleSpinner(true); 
+            try { 
+                const email = document.getElementById("login-email").value; 
+                const password = document.getElementById("login-password").value; 
+                const { data: { user }, error } = await supabaseClient.auth.signInWithPassword({ email, password }); 
+                if (error) throw new Error("Invalid credentials. Have you confirmed your email?"); 
+                if (!user) throw new Error("Login succeeded but no user object was returned."); 
+                const { data, error: fetchError } = await supabaseClient.from("factory_access").select("dashboard_url, role").eq("user_id", user.id).single(); 
+                if (fetchError) throw fetchError; 
+                if (!data) throw new Error("Could not find dashboard information for your account."); 
+                if (data.role === 'admin') { throw new Error("Admin accounts must login through the Admin page."); } 
+                
+                // --- FIX: Redirect user directly to the dashboard URL ---
+                if (data.dashboard_url) {
+                    window.location.href = data.dashboard_url;
+                } else {
+                    throw new Error("Dashboard URL not configured for this factory.");
+                }
+
+            } catch (error) { 
+                console.error("Login Error:", error); 
+                showError(`Login failed: ${error.message}`); 
+            } finally { 
+                toggleSpinner(false); 
+            } 
+        }
+
+        async function loginAdmin(event) { 
+            event.preventDefault(); 
+            toggleSpinner(true, true); 
+            try { 
+                const email = document.getElementById("admin-login-email").value; 
+                const password = document.getElementById("admin-login-password").value; 
+                const { data: { user }, error } = await supabaseClient.auth.signInWithPassword({ email, password }); 
+                if (error) throw new Error("Invalid admin credentials."); 
+                if (!user) throw new Error("Login succeeded but no user object was returned."); 
+                const { data, error: fetchError } = await supabaseClient.from("factory_access").select("role").eq("user_id", user.id).single(); 
+                if (fetchError || !data || data.role !== 'admin') { throw new Error("This account does not have admin privileges."); } 
+                showAdminDashboard(); 
+            } catch (error) { 
+                console.error("Admin Login Error:", error); 
+                showError(`Login failed: ${error.message}`, true); 
+            } finally { 
+                toggleSpinner(false, true); 
+            } 
+        }
+
+        async function signupAdmin(event) { 
+            event.preventDefault(); 
+            toggleSpinner(true, true); 
+            try { 
+                const email = document.getElementById("admin-signup-email").value; 
+                const password = document.getElementById("admin-signup-password").value; 
+                const { data: { user }, error } = await supabaseClient.auth.signUp({ email, password }); 
+                if (error) { if (error.message.includes("User already registered")) { throw new Error("Admin user already exists with this email."); } throw error; } 
+                if (!user) throw new Error("Signup succeeded but no user object was returned."); 
+                const { error: insertError } = await supabaseClient.from("factory_access").insert([{ user_id: user.id, user_email: email, factory_name: 'Admin Account', role: 'admin' }]); 
+                if (insertError) throw insertError; 
+                showError("Admin account created! Please check your email to verify, then login.", true); 
+            } catch (error) { 
+                console.error("Admin Signup Error:", error); 
+                showError(`Signup failed: ${error.message}`, true); 
+            } finally { 
+                toggleSpinner(false, true); 
+            } 
+        }
+
+        async function handlePasswordReset(event) { 
+            event.preventDefault(); 
+            const resetInstructions = document.getElementById('reset-instructions'); 
+            const form = document.getElementById('password-reset-form'); 
+            toggleSpinner(true); 
+            try { 
+                const email = document.getElementById("reset-email").value; 
+                const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin }); 
+                if (error) throw error; 
+                resetInstructions.textContent = "Success! If an account exists for this email, a password reset link has been sent."; 
+                resetInstructions.style.color = 'lightgreen'; 
+                form.classList.add('hidden'); 
+            } catch (error) { 
+                console.error("Password Reset Error:", error); 
+                resetInstructions.textContent = `Error: ${error.message}`; 
+                resetInstructions.style.color = 'salmon'; 
+            } finally { 
+                toggleSpinner(false); 
+            } 
+        }
+
+        // --- Admin & Dashboard Functions ---
+        async function showAdminDashboard() { 
+            document.getElementById('app-container').classList.add('hidden'); 
+            showModal('admin-dashboard'); 
+            loadFactories(); 
+        }
+        
+        async function loadFactories() { 
+            const { data: factories, error } = await supabaseClient.from('factory_access').select('factory_name, dashboard_url'); 
+            if (error) return showError("Could not load factories: " + error.message); 
+            const factoryList = document.getElementById('factory-list'); 
+            factoryList.innerHTML = ''; 
+            factories.forEach(factory => { 
+                const item = document.createElement('div'); 
+                item.className = 'p-3 rounded-lg cursor-pointer hover:bg-gray-800 transition-colors'; 
+                item.textContent = factory.factory_name; 
+                // --- FIX: Open dashboard in a new tab for admins ---
+                item.onclick = () => {
+                    if (factory.dashboard_url) {
+                        window.open(factory.dashboard_url, '_blank');
+                    } else {
+                        alert('No dashboard URL configured for this factory.');
+                    }
+                };
+                factoryList.appendChild(item); 
+            }); 
+        }
+        
+        async function loadUsers() { 
+            const { data: users, error } = await supabaseClient.from('factory_access').select('*'); 
+            if (error) return console.error("Error loading users:", error); 
+            const userList = document.getElementById('user-list'); 
+            userList.innerHTML = ''; 
+            users.forEach(user => { 
+                const item = document.createElement('div'); 
+                item.className = 'p-3 rounded-lg bg-gray-800 flex justify-between items-center'; 
+                item.innerHTML = `<div><p class="font-bold">${user.factory_name}</p><p class="text-xs text-muted">${user.user_email}</p></div><div><button onclick='showUserForm(${JSON.stringify(user)})' class="text-xs text-blue-400 hover:underline mr-4">Edit</button><button onclick='deleteUser("${user.user_id}")' class="text-xs text-red-400 hover:underline">Delete</button></div>`; 
+                userList.appendChild(item); 
+            }); 
+        }
+        
+        async function logout() { 
+            await supabaseClient.auth.signOut(); 
+            window.location.reload(); 
+        }
+        
+        // --- Admin User Management ---
+        function showUserForm(user) { const form = document.getElementById('user-form'); form.reset(); document.getElementById('user-id-field').value = user.user_id; document.getElementById('user-factory-name').value = user.factory_name; document.getElementById('user-email').value = user.user_email; showModal('user-form-modal'); }
+        
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => { 
+            try { if (typeof supabase !== 'undefined') { supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } else { showError("Authentication system failed to load. Please refresh the page."); } } catch (err) { showError("Authentication system failed to load: " + err.message); } 
+            
+            document.getElementById('auth-toggle-link').addEventListener('click', (e) => { e.preventDefault(); const isLoginVisible = !document.getElementById('login-form').classList.contains('hidden'); toggleAuthView(!isLoginVisible); });
+            
+            const styleSheet = document.createElement("style"); styleSheet.type = "text/css"; styleSheet.innerText = `@keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.98); } }`; document.head.appendChild(styleSheet); 
+            
+            document.getElementById('password-reset-form').addEventListener('submit', handlePasswordReset); 
+            
+            document.querySelectorAll('#forgot-password-modal, #user-form-modal, #admin-code-modal').forEach(modal => { modal.addEventListener('click', (e) => { if (e.target === modal) hideModal(modal.id); }); }); 
+            
+            document.getElementById('admin-code-form').addEventListener('submit', (e) => { e.preventDefault(); const codeInput = document.getElementById('admin-code-input'); const errorMsg = document.getElementById('admin-code-error'); if (codeInput.value === '1111') { hideModal('admin-code-modal'); navigateTo('admin-login-page'); } else { errorMsg.classList.remove('hidden'); } }); 
+            
+            document.getElementById('user-form').addEventListener('submit', async (event) => { 
+                event.preventDefault(); 
+                const userId = document.getElementById('user-id-field').value; 
+                const factory_name = document.getElementById('user-factory-name').value; 
+                const password = document.getElementById('user-password').value; 
+                if (!userId) { alert("Error: No user selected for editing."); return; } 
+                try { 
+                    if (password) { 
+                        alert("Password changes must be done via a secure backend function. This feature is a placeholder. Please ask your developer to implement a Supabase Edge Function for 'updateUserById'."); 
+                        return;
+                    } 
+                    const { error: dbError } = await supabaseClient.from('factory_access').update({ factory_name }).eq('user_id', userId); 
+                    if (dbError) throw dbError; 
+                    hideModal('user-form-modal'); 
+                    loadUsers(); 
+                } catch (error) { 
+                    alert("Error saving user: " + error.message); 
+                } 
+            });
+
+            async function deleteUser(userId) { 
+                if (confirm("Are you sure you want to delete this user? This action is permanent and cannot be undone.")) { 
+                    alert("For security reasons, user deletion must be performed from the Supabase dashboard by an administrator."); 
+                } 
+            }
+            
+            setupAdminTabs(); 
+            setupAdminLoginTabs(); 
+        });
+    </script>
+</body>
+</html>
