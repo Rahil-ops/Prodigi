@@ -228,6 +228,60 @@
         </div>
     </div>
     
+    <!-- User Form Modal (FIX: ADDED MISSING MODAL) -->
+    <div id="user-form-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-900 border border-gray-800 rounded-lg p-6 max-w-lg w-full m-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-bold text-white">Edit User Details</h3>
+                <button onclick="hideModal('user-form-modal')" class="text-gray-400 hover:text-white text-2xl">×</button>
+            </div>
+            <form id="user-form" class="space-y-4">
+                <input type="hidden" id="user-id-field" />
+                
+                <div>
+                    <label for="user-factory-name" class="text-xs text-muted font-semibold mb-1 block">Factory Name</label>
+                    <input type="text" id="user-factory-name" class="input-field !pl-4 w-full" />
+                </div>
+                
+                <div>
+                    <label for="user-email" class="text-xs text-muted font-semibold mb-1 block">User Email</label>
+                    <input type="email" id="user-email" class="input-field !pl-4 w-full bg-gray-800 cursor-not-allowed" readonly />
+                </div>
+
+                <div>
+                    <label for="user-dashboard-url" class="text-xs text-muted font-semibold mb-1 block">Dashboard URL</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="user-dashboard-url" placeholder="https://your-dashboard-url.com" class="input-field !pl-4 w-full" />
+                        <button type="button" onclick="copyDashboardUrl()" title="Copy URL" class="p-2 bg-gray-700 rounded-md text-blue-400 hover:text-blue-300 hover:bg-gray-600 transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="user-role" class="text-xs text-muted font-semibold mb-1 block">Role</label>
+                    <select id="user-role" class="input-field !pl-4 w-full">
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="user-password" class="text-xs text-muted font-semibold mb-1 block">New Password (Optional)</label>
+                    <input type="password" id="user-password" placeholder="Leave blank to keep current password" class="input-field !pl-4 w-full" />
+                     <p class="text-xs text-amber-500 mt-1">Note: Password change requires a secure backend function.</p>
+                </div>
+
+                <div class="flex justify-end space-x-4 pt-4">
+                    <button type="button" onclick="hideModal('user-form-modal')" class="text-muted hover:text-white">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <!-- Admin Dashboard -->
     <div id="admin-dashboard" class="fixed inset-0 bg-black/70 z-50 hidden p-4 sm:p-8">
         <div class="bg-gray-900 border border-gray-800 rounded-lg w-full h-full flex flex-col p-6">
@@ -236,35 +290,45 @@
                 <button onclick="logout()" class="text-sm text-muted hover:text-white">Logout</button>
             </div>
             <div class="flex border-b border-gray-700 mb-4">
-                <button id="factories-tab" class="py-2 px-4 text-white border-b-2 border-purple-500">Factories</button>
-                <button id="users-tab" class="py-2 px-4 text-muted">User Management</button>
+                <button id="factories-tab" class="py-2 px-6 text-white border-b-2 border-purple-500 font-semibold transition-all duration-200 hover:bg-purple-900/30">Factories</button>
+                <button id="users-tab" class="py-2 px-6 text-muted transition-all duration-200 hover:text-white hover:bg-gray-700/30">User Management</button>
             </div>
             <div id="factories-view" class="flex-grow overflow-y-auto">
+                 <div class="flex items-center justify-between mb-4">
+                     <h3 class="text-lg font-semibold">Factory Dashboards</h3>
+                     <button onclick="refreshFactories()" class="text-xs bg-gray-800 hover:bg-gray-700 text-white py-1 px-3 rounded-md transition-all">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                         </svg>
+                         Refresh
+                     </button>
+                 </div>
                  <input type="text" id="factory-search" onkeyup="filterList('factory-list', 'factory-search')" placeholder="Search factories..." class="input-field !pl-4 w-full mb-4">
-                 <div id="factory-list" class="space-y-2 pr-2"></div>
+                 <div id="factory-list" class="space-y-3 pr-2"></div>
             </div>
             <div id="users-view" class="hidden flex-grow overflow-y-auto">
-                <div id="user-list" class="space-y-2 pr-2"></div>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">User Management</h3>
+                    <div class="flex space-x-2">
+                        <select id="user-filter" onchange="filterUsersByType()" class="bg-gray-800 border border-gray-700 text-white text-xs rounded-md py-1 px-3">
+                            <option value="all">All Users</option>
+                            <option value="admin">Admins Only</option>
+                            <option value="user">Users Only</option>
+                        </select>
+                        <button onclick="refreshUsers()" class="text-xs bg-gray-800 hover:bg-gray-700 text-white py-1 px-3 rounded-md transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+                <input type="text" id="user-search" onkeyup="filterList('user-list', 'user-search')" placeholder="Search users..." class="input-field !pl-4 w-full mb-4">
+                <div id="user-list" class="space-y-3 pr-2"></div>
             </div>
         </div>
     </div>
 
-    <!-- Edit User Modal -->
-    <div id="user-form-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
-        <div class="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-md w-full m-4">
-            <h3 class="text-lg font-bold text-white mb-4">Edit User / Reset Password</h3>
-            <form id="user-form" class="space-y-4">
-                <input type="hidden" id="user-id-field">
-                <input type="text" id="user-factory-name" placeholder="Factory Name" class="input-field !pl-4" required>
-                <input type="email" id="user-email" placeholder="User Email" class="input-field !pl-4 bg-gray-700 cursor-not-allowed" readonly>
-                <input type="password" id="user-password" placeholder="Set New Password (optional)" class="input-field !pl-4">
-                <div class="flex justify-end space-x-4">
-                    <button type="button" onclick="hideModal('user-form-modal')" class="text-muted">Cancel</button>
-                    <button type="submit" class="btn-primary">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     <script>
         // --- UI Control & Navigation ---
@@ -432,35 +496,232 @@
         async function loadFactories() { 
             const { data: factories, error } = await supabaseClient.from('factory_access').select('factory_name, dashboard_url'); 
             if (error) return showError("Could not load factories: " + error.message); 
+            
             const factoryList = document.getElementById('factory-list'); 
             factoryList.innerHTML = ''; 
-            factories.forEach(factory => { 
+            
+            // Create a map to store unique factories with their dashboard URLs
+            const uniqueFactories = new Map();
+            
+            // Collect unique factory names
+            factories.forEach(factory => {
+                uniqueFactories.set(factory.factory_name, factory.dashboard_url || '');
+            });
+            
+            // Display unique factories
+            uniqueFactories.forEach((dashboardUrl, factoryName) => {
                 const item = document.createElement('div'); 
-                item.className = 'p-3 rounded-lg cursor-pointer hover:bg-gray-800 transition-colors'; 
-                item.textContent = factory.factory_name; 
-                // --- FIX: Open dashboard in a new tab for admins ---
-                item.onclick = () => {
-                    if (factory.dashboard_url) {
-                        window.open(factory.dashboard_url, '_blank');
+                item.className = 'p-4 rounded-lg bg-gray-800 flex justify-between items-center'; 
+                
+                const nameEl = document.createElement('div');
+                nameEl.className = 'font-semibold';
+                nameEl.textContent = factoryName;
+                item.appendChild(nameEl);
+                
+                const actions = document.createElement('div');
+                actions.className = 'flex space-x-2';
+                
+                // Copy URL button
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'text-xs text-blue-400 hover:text-blue-300 flex items-center';
+                copyBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Copy URL
+                `;
+                copyBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (dashboardUrl) {
+                        navigator.clipboard.writeText(dashboardUrl)
+                            .then(() => {
+                                copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Copied!`;
+                                copyBtn.className = 'text-xs text-green-400 flex items-center';
+                                setTimeout(() => {
+                                    copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                    Copy URL`;
+                                    copyBtn.className = 'text-xs text-blue-400 hover:text-blue-300 flex items-center';
+                                }, 2000);
+                            })
+                            .catch(err => {
+                                alert('Failed to copy: ' + err);
+                            });
                     } else {
                         alert('No dashboard URL configured for this factory.');
                     }
                 };
+                actions.appendChild(copyBtn);
+                
+                // View button
+                const viewBtn = document.createElement('button');
+                viewBtn.className = 'text-xs text-purple-400 hover:text-purple-300 flex items-center';
+                viewBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    View
+                `;
+                viewBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (dashboardUrl) {
+                        window.open(dashboardUrl, '_blank');
+                    } else {
+                        alert('No dashboard URL configured for this factory.');
+                    }
+                };
+                actions.appendChild(viewBtn);
+                
+                item.appendChild(actions);
                 factoryList.appendChild(item); 
             }); 
+        }
+        
+        function refreshFactories() {
+            loadFactories();
         }
         
         async function loadUsers() { 
             const { data: users, error } = await supabaseClient.from('factory_access').select('*'); 
             if (error) return console.error("Error loading users:", error); 
+            
             const userList = document.getElementById('user-list'); 
             userList.innerHTML = ''; 
-            users.forEach(user => { 
+            
+            // Get the current filter value
+            const filterValue = document.getElementById('user-filter').value;
+            
+            // Filter users based on the selected filter
+            const filteredUsers = filterValue === 'all' ? 
+                users : 
+                users.filter(user => {
+                    const isAdmin = user.role === 'admin';
+                    return (filterValue === 'admin' && isAdmin) || (filterValue === 'user' && !isAdmin);
+                });
+            
+            filteredUsers.forEach(user => { 
                 const item = document.createElement('div'); 
-                item.className = 'p-3 rounded-lg bg-gray-800 flex justify-between items-center'; 
-                item.innerHTML = `<div><p class="font-bold">${user.factory_name}</p><p class="text-xs text-muted">${user.user_email}</p></div><div><button onclick='showUserForm(${JSON.stringify(user)})' class="text-xs text-blue-400 hover:underline mr-4">Edit</button><button onclick='deleteUser("${user.user_id}")' class="text-xs text-red-400 hover:underline">Delete</button></div>`; 
+                item.className = 'p-4 rounded-lg bg-gray-800 flex justify-between items-center'; 
+                
+                // Determine if user is admin based on role column
+                const isAdmin = user.role === 'admin';
+                const userType = isAdmin ? 
+                    '<span class="text-xs bg-purple-900/50 text-purple-300 py-1 px-2 rounded ml-2">Admin</span>' : 
+                    '<span class="text-xs bg-blue-900/50 text-blue-300 py-1 px-2 rounded ml-2">User</span>';
+                
+                // Create user info section with dashboard URL if available
+                const dashboardUrlDisplay = user.dashboard_url ? 
+                    `<div class="flex items-center mt-1">
+                        <span class="text-xs text-muted mr-1">URL:</span>
+                        <span class="text-xs text-blue-400 truncate max-w-[150px]">${user.dashboard_url}</span>
+                        <button onclick='copyToClipboard("${user.dashboard_url}", this)' class="text-xs text-blue-400 hover:text-blue-300 ml-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                        </button>
+                    </div>` : 
+                    '<span class="text-xs text-gray-500 mt-1">No dashboard URL</span>';
+                
+                item.innerHTML = `
+                    <div>
+                        <div class="flex items-center">
+                            <p class="font-bold">${user.factory_name}</p>
+                            ${userType}
+                        </div>
+                        <p class="text-xs text-muted">${user.user_email}</p>
+                        ${dashboardUrlDisplay}
+                    </div>
+                    <div>
+                        <button onclick='showUserForm(${JSON.stringify(user)})' class="text-xs text-blue-400 hover:underline mr-4">Edit</button>
+                        <button onclick='deleteUser("${user.user_id}")' class="text-xs text-red-400 hover:underline">Delete</button>
+                    </div>
+                `; 
+                
                 userList.appendChild(item); 
             }); 
+        }
+        
+        function refreshUsers() {
+            loadUsers();
+        }
+        
+        function filterUsersByType() {
+            loadUsers();
+        }
+        
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    // Store the original HTML
+                    const originalHTML = button.innerHTML;
+                    
+                    // Change to checkmark
+                    button.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    `;
+                    button.classList.remove('text-blue-400', 'hover:text-blue-300');
+                    button.classList.add('text-green-400');
+                    
+                    // Revert after 2 seconds
+                    setTimeout(() => {
+                        button.innerHTML = originalHTML;
+                        button.classList.remove('text-green-400');
+                        button.classList.add('text-blue-400', 'hover:text-blue-300');
+                    }, 2000);
+                })
+                .catch(err => {
+                    alert('Failed to copy: ' + err);
+                });
+        }
+        
+        function showUserForm(user) {
+            const form = document.getElementById('user-form');
+            form.reset();
+            
+            document.getElementById('user-id-field').value = user.user_id;
+            document.getElementById('user-factory-name').value = user.factory_name;
+            document.getElementById('user-email').value = user.user_email;
+            document.getElementById('user-dashboard-url').value = user.dashboard_url || '';
+            document.getElementById('user-role').value = user.role || 'user';
+            
+            showModal('user-form-modal');
+        }
+        
+        function copyDashboardUrl() {
+            const dashboardUrl = document.getElementById('user-dashboard-url').value;
+            if (dashboardUrl) {
+                navigator.clipboard.writeText(dashboardUrl)
+                    .then(() => {
+                        const copyBtn = document.querySelector('#user-form-modal button[onclick="copyDashboardUrl()"]');
+                        const originalSvg = copyBtn.innerHTML;
+                        
+                        copyBtn.innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        `;
+                        copyBtn.classList.add('text-green-400');
+                        copyBtn.classList.remove('text-blue-400', 'hover:text-blue-300');
+                        
+                        setTimeout(() => {
+                            copyBtn.innerHTML = originalSvg;
+                            copyBtn.classList.remove('text-green-400');
+                            copyBtn.classList.add('text-blue-400', 'hover:text-blue-300');
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        alert('Failed to copy: ' + err);
+                    });
+            } else {
+                alert('No dashboard URL to copy');
+            }
         }
         
         async function logout() { 
@@ -469,7 +730,7 @@
         }
         
         // --- Admin User Management ---
-        function showUserForm(user) { const form = document.getElementById('user-form'); form.reset(); document.getElementById('user-id-field').value = user.user_id; document.getElementById('user-factory-name').value = user.factory_name; document.getElementById('user-email').value = user.user_email; showModal('user-form-modal'); }
+        // Note: showUserForm function is defined above
         
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => { 
@@ -489,6 +750,8 @@
                 event.preventDefault(); 
                 const userId = document.getElementById('user-id-field').value; 
                 const factory_name = document.getElementById('user-factory-name').value; 
+                const dashboard_url = document.getElementById('user-dashboard-url').value; 
+                const role = document.getElementById('user-role').value;
                 const password = document.getElementById('user-password').value; 
                 if (!userId) { alert("Error: No user selected for editing."); return; } 
                 try { 
@@ -496,10 +759,15 @@
                         alert("Password changes must be done via a secure backend function. This feature is a placeholder. Please ask your developer to implement a Supabase Edge Function for 'updateUserById'."); 
                         return;
                     } 
-                    const { error: dbError } = await supabaseClient.from('factory_access').update({ factory_name }).eq('user_id', userId); 
+                    const { error: dbError } = await supabaseClient.from('factory_access').update({ 
+                        factory_name,
+                        dashboard_url,
+                        role
+                    }).eq('user_id', userId); 
                     if (dbError) throw dbError; 
                     hideModal('user-form-modal'); 
                     loadUsers(); 
+                    loadFactories(); // Refresh factories list to show updated dashboard URLs
                 } catch (error) { 
                     alert("Error saving user: " + error.message); 
                 } 
